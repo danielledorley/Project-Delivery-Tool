@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Delivery Decision Tool — SWANA FL 2026</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:      #1B3A5C;
+    --teal:      #0D7680;
+    --mint:      #3AAFA9;
+    --gold:      #E8A838;
+    --slate:     #4A6274;
+    --light-bg:  #F4F7F9;
+    --white:     #FFFFFF;
+    --text:      #1A2E3D;
+    --muted:     #6B8699;
+    --border:    #D6E2EA;
+    --card-bg:   #FFFFFF;
+    --body-bg:   #F0F4F7;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--body-bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    background: var(--navy);
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .header-inner {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 28px 24px 24px;
+    position: relative;
+    z-index: 1;
+  }
+  .header-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--mint);
+    margin-bottom: 8px;
+  }
+  header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.3;
+    margin-bottom: 6px;
+  }
+  header p {
+    font-size: 13px;
+    color: #8CA5B5;
+    line-height: 1.5;
+  }
+  .header-accent {
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 120px;
+    background: var(--teal);
+    opacity: .25;
+  }
+
+  main {
+    flex: 1;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+    width: 100%;
+  }
+
+  /* Progress */
+  .progress-wrap { margin-bottom: 20px; }
+  .progress-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .progress-label { font-size: 12px; color: var(--muted); font-weight: 500; }
+  .progress-count { font-size: 12px; color: var(--muted); }
+  .progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--teal); border-radius: 2px; transition: width .4s ease; }
+  .step-dots { display: flex; gap: 8px; margin-top: 10px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: background .3s; }
+  .dot.done { background: var(--teal); }
+  .dot.active { background: var(--teal); box-shadow: 0 0 0 3px rgba(13,118,128,.2); }
+
+  /* Question card */
+  .q-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px 24px 24px;
+    margin-bottom: 16px;
+  }
+  .q-num {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 10px;
+  }
+  .q-text {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--navy);
+    line-height: 1.4;
+    margin-bottom: 20px;
+  }
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .opt {
+    display: flex; align-items: flex-start; gap: 14px;
+    padding: 14px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    background: var(--light-bg);
+    user-select: none;
+  }
+  .opt:hover { border-color: var(--teal); background: #EBF5F5; }
+  .opt.selected { border-color: var(--teal); background: #EBF5F5; }
+  .opt-dot {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 2px solid var(--border);
+    flex-shrink: 0; margin-top: 1px;
+    transition: background .15s, border-color .15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .opt.selected .opt-dot { background: var(--teal); border-color: var(--teal); }
+  .opt-dot::after {
+    content: ''; width: 8px; height: 8px; border-radius: 50%;
+    background: #fff; opacity: 0; transition: opacity .15s;
+  }
+  .opt.selected .opt-dot::after { opacity: 1; }
+  .opt-title { font-size: 14px; font-weight: 600; color: var(--navy); margin-bottom: 3px; }
+  .opt-sub { font-size: 12px; color: var(--muted); line-height: 1.4; }
+
+  /* Nav */
+  .nav { display: flex; gap: 10px; }
+  .btn {
+    padding: 10px 22px; border-radius: 8px;
+    border: 1.5px solid var(--border);
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    background: var(--white); color: var(--navy);
+    transition: background .15s, border-color .15s;
+  }
+  .btn:hover { background: var(--light-bg); border-color: #b0c4d0; }
+  .btn:disabled { opacity: .35; cursor: not-allowed; }
+  .btn.primary { background: var(--teal); border-color: var(--teal); color: #fff; }
+  .btn.primary:hover { background: #0a6068; border-color: #0a6068; }
+
+  /* Result */
+  .result-eyebrow {
+    font-size: 11px; font-weight: 600; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
+  }
+  .result-main {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden; margin-bottom: 20px;
+  }
+  .result-hero {
+    padding: 20px 24px; display: flex; align-items: center; gap: 16px;
+  }
+  .result-icon {
+    width: 52px; height: 52px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0;
+    letter-spacing: .03em;
+  }
+  .result-title { font-size: 22px; font-weight: 700; color: var(--navy); }
+  .result-tag { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .result-body { padding: 0 24px 20px; }
+  .factors-title {
+    font-size: 11px; font-weight: 600; letter-spacing: .07em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 12px;
+  }
+  .factor-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .factor-lbl { font-size: 12px; color: var(--muted); width: 120px; flex-shrink: 0; }
+  .bar-track { flex: 1; height: 7px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; }
+  .factor-val { font-size: 11px; color: var(--muted); width: 70px; text-align: right; flex-shrink: 0; }
+  .why-box {
+    background: var(--light-bg); border-radius: 8px;
+    padding: 14px 16px; margin-top: 16px;
+    font-size: 13px; color: var(--muted); line-height: 1.6;
+  }
+  .why-box strong { color: var(--navy); }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+  /* All methods */
+  .all-title {
+    font-size: 11px; font-weight: 600; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 12px;
+  }
+  .mini-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  @media (max-width: 480px) { .mini-grid { grid-template-columns: 1fr; } }
+  .mini-card {
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 14px; background: var(--card-bg);
+    transition: border-color .15s;
+  }
+  .mini-card.dim { opacity: .5; }
+  .mini-name { font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 5px; }
+  .mini-bar { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 5px; }
+  .mini-bar-fill { height: 100%; border-radius: 3px; }
+  .mini-note { font-size: 11px; color: var(--muted); }
+
+  /* Answers recap */
+  .answers-title {
+    font-size: 11px; font-weight: 600; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 10px;
+  }
+  .chip-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    font-size: 11px; padding: 4px 10px;
+    border-radius: 20px; border: 1px solid var(--border);
+    color: var(--muted); background: var(--card-bg);
+    line-height: 1.4;
+  }
+  .restart-row { text-align: center; margin-top: 20px; }
+
+  footer {
+    background: var(--navy); color: #8CA5B5;
+    text-align: center; font-size: 11px; padding: 16px;
+  }
+  footer span { color: var(--mint); }
+
+  /* Hidden panel util */
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-eyebrow">SWANA FL 2026 · Interactive Tool</div>
+    <h1>Project Delivery Decision Tool</h1>
+    <p>Answer 6 questions to find the right delivery method for your solid waste facility.</p>
+  </div>
+  <div class="header-accent"></div>
+</header>
+
+<main>
+
+  <!-- QUIZ PANEL -->
+  <div id="quiz-panel">
+    <div class="progress-wrap">
+      <div class="progress-meta">
+        <span class="progress-label" id="prog-label">Question 1 of 6</span>
+        <span class="progress-count" id="prog-count">0% complete</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="pbar" style="width:0%"></div></div>
+      <div class="step-dots" id="dots"></div>
+    </div>
+
+    <div class="q-card">
+      <div class="q-num" id="qnum"></div>
+      <div class="q-text" id="qtext"></div>
+      <div class="options" id="opts"></div>
+    </div>
+
+    <div class="nav">
+      <button class="btn" id="back-btn" onclick="go(-1)">← Back</button>
+      <button class="btn primary" id="next-btn" onclick="go(1)" disabled>Next →</button>
+    </div>
+  </div>
+
+  <!-- RESULT PANEL -->
+  <div id="result-panel" class="hidden"></div>
+
+</main>
+
+<footer>
+  <span>SWANA FL Summer Conference</span> · Orlando, FL · July 19–21, 2026
+</footer>
+
+<script>
+const Qs = [
+  {
+    id:'own', label:'Ownership',
+    text:'Does your agency want to own the facility?',
+    opts:[
+      {val:'yes', title:'Yes — we want to own it', sub:'Capital outlay is expected; long-term community asset'},
+      {val:'no',  title:'No — we prefer not to own it', sub:'Merchant or service agreement preferred; avoid capital investment'},
+    ]
+  },
+  {
+    id:'operate', label:'Operations',
+    text:'Does your agency want to operate the facility?',
+    opts:[
+      {val:'yes',  title:'Yes — public operation preferred', sub:'Maintain direct control over day-to-day activities and staffing'},
+      {val:'maybe',title:'Open to either public or private', sub:'Will evaluate competitive proposals from private operators'},
+      {val:'no',   title:'No — private operation preferred', sub:'Transfer operational risk; negotiate long-term performance contract'},
+    ]
+  },
+  {
+    id:'cost', label:'Cost Certainty',
+    text:'How important is knowing total project cost before you start?',
+    opts:[
+      {val:'critical', title:'Critical — need a fixed price upfront', sub:'Board approval or bond issuance requires certainty before award'},
+      {val:'moderate', title:'Moderate — a guaranteed maximum is acceptable', sub:'Cost exposure limited by GMP; some flexibility in final number'},
+      {val:'low',      title:'Low — cost will be defined at bid day', sub:'Traditional competitive bidding; price established through market'},
+    ]
+  },
+  {
+    id:'schedule', label:'Schedule',
+    text:'How urgent is your project implementation timeline?',
+    opts:[
+      {val:'urgent', title:'Very urgent — shortest possible timeline', sub:'Facility needed quickly; concurrent design and construction acceptable'},
+      {val:'normal', title:'Standard — sequential procurement is fine', sub:'No unusual schedule pressure; phased milestones are manageable'},
+    ]
+  },
+  {
+    id:'risk', label:'Risk Tolerance',
+    text:'How would you characterize your agency\'s risk tolerance?',
+    opts:[
+      {val:'low',    title:'Low — minimize exposure at all phases', sub:'Prefer to transfer development, construction, and operations risk'},
+      {val:'medium', title:'Medium — manage risk with familiar tools', sub:'Comfortable with a GMP or performance contract as protection'},
+      {val:'high',   title:'Higher — direct control is the priority', sub:'Willing to accept more risk in exchange for prescriptive design oversight'},
+    ]
+  },
+  {
+    id:'specs', label:'Specifications',
+    text:'How would you prefer to define what the facility must do?',
+    opts:[
+      {val:'prescriptive', title:'Prescriptive — detailed plans & specifications', sub:'We provide full design drawings; contractor builds exactly to our specs'},
+      {val:'performance',  title:'Performance-based — define outcomes, not methods', sub:'Specify throughput, recovery rates, and quality; contractor innovates'},
+    ]
+  },
+];
+
+const answers = {};
+let cur = 0;
+
+const METHODS = {
+  dbb: {
+    name:'Design-Bid-Build', short:'DBB', color:'#3A7CA5',
+    tagline:'Traditional method — familiar, prescriptive, longest timeline',
+    bars:{cost:20,schedule:10,risk:25,ops:0,control:100},
+    labels:{cost:'Low — after bids',schedule:'Longest',risk:'Owner bears most',ops:'None',control:'Highest'},
+  },
+  cmar: {
+    name:'CM at Risk', short:'CMAR', color:'#2E86AB',
+    tagline:'GMP cap + contractor input — proven middle ground',
+    bars:{cost:50,schedule:30,risk:45,ops:0,control:80},
+    labels:{cost:'Medium — GMP cap',schedule:'Similar to DBB',risk:'Moderate-high',ops:'None',control:'High'},
+  },
+  db: {
+    name:'Design-Build', short:'DB', color:'#0D7680',
+    tagline:'Fixed price, shorter schedule, single-entity accountability',
+    bars:{cost:85,schedule:70,risk:65,ops:0,control:50},
+    labels:{cost:'High — fixed price',schedule:'Shorter',risk:'Moderate',ops:'Separate',control:'Moderate'},
+  },
+  dbo: {
+    name:'Design-Build-Operate', short:'DBO', color:'#1B3A5C',
+    tagline:'Full lifecycle integration — optimizes long-term cost & performance',
+    bars:{cost:100,schedule:90,risk:90,ops:100,control:25},
+    labels:{cost:'Highest — cap + ops',schedule:'Shortest',risk:'Lowest for owner',ops:'Fully integrated',control:'Lower'},
+  },
+  merchant: {
+    name:'Merchant Facility', short:'Merchant', color:'#4A6274',
+    tagline:'No capital outlay — put-or-pay agreement with private merchant',
+    bars:{cost:75,schedule:50,risk:70,ops:100,control:10},
+    labels:{cost:'Fixed by contract',schedule:'Varies',risk:'Low capital risk',ops:'Fully private',control:'Limited'},
+  },
+};
+
+function score() {
+  const s = {dbb:0,cmar:0,db:0,dbo:0,merchant:0};
+  const a = answers;
+  if(a.own==='no'){ s.merchant+=40; }
+  else { s.dbb+=10; s.cmar+=10; s.db+=10; s.dbo+=10; }
+  if(a.operate==='yes'){ s.dbb+=15; s.cmar+=10; }
+  else if(a.operate==='no'){ s.dbo+=20; s.merchant+=20; }
+  else { s.db+=10; s.dbo+=15; s.cmar+=10; }
+  if(a.cost==='critical'){ s.db+=25; s.dbo+=30; }
+  else if(a.cost==='moderate'){ s.cmar+=25; }
+  else { s.dbb+=25; }
+  if(a.schedule==='urgent'){ s.db+=20; s.dbo+=25; }
+  else { s.dbb+=15; s.cmar+=15; }
+  if(a.risk==='low'){ s.dbo+=25; s.db+=15; }
+  else if(a.risk==='medium'){ s.cmar+=20; s.db+=10; }
+  else { s.dbb+=25; s.cmar+=10; }
+  if(a.specs==='prescriptive'){ s.dbb+=20; s.cmar+=15; }
+  else { s.db+=20; s.dbo+=25; }
+  return s;
+}
+
+function whyText(key) {
+  const a = answers;
+  const parts = [];
+  if(key==='dbb'){
+    if(a.specs==='prescriptive') parts.push('You want full prescriptive control over facility design');
+    if(a.operate==='yes') parts.push('public operation is preferred');
+    if(a.cost==='low') parts.push('cost certainty before bids is not a priority');
+    if(a.risk==='high') parts.push('you are comfortable accepting owner risk in exchange for direct design oversight');
+  } else if(key==='cmar'){
+    if(a.cost==='moderate') parts.push('a Guaranteed Maximum Price gives you a cost cap without requiring performance-based specs');
+    if(a.operate==='yes'||a.operate==='maybe') parts.push('operations will be procured separately through competitive bidding');
+    if(a.risk==='medium') parts.push('your moderate risk tolerance is well-matched to the GMP structure');
+  } else if(key==='db'){
+    if(a.cost==='critical') parts.push('a fixed lump-sum price gives you the upfront certainty you need before award');
+    if(a.schedule==='urgent') parts.push('concurrent design and construction significantly shortens your delivery timeline');
+    if(a.specs==='performance') parts.push('you are comfortable defining outcomes rather than prescribing methods');
+    if(a.operate==='maybe'||a.operate==='yes') parts.push('operations can be competitively procured as a separate contract');
+  } else if(key==='dbo'){
+    if(a.operate==='no') parts.push('you prefer private operation with full risk transfer');
+    if(a.cost==='critical') parts.push('capital AND operating costs are fixed through a single performance contract');
+    if(a.schedule==='urgent') parts.push('DBO produces the shortest implementation schedule of any in-house delivery method');
+    if(a.risk==='low') parts.push('the DBO entity bears development, construction, and operational risk throughout the contract term');
+    if(a.specs==='performance') parts.push('performance-based specifications are the foundation of DBO — innovation is how the contractor wins');
+  } else if(key==='merchant'){
+    if(a.own==='no') parts.push('you do not want to own the facility — the merchant owns, finances, and operates it');
+    parts.push('a put-or-pay agreement provides processing certainty without any capital investment from your agency');
+  }
+  return parts.length
+    ? parts.map((p,i) => i===0 ? p[0].toUpperCase()+p.slice(1) : p).join('; ') + '.'
+    : 'This method best aligns with your stated priorities.';
+}
+
+function render() {
+  const total = Qs.length;
+  const pct = Math.round((cur / total) * 100);
+  document.getElementById('pbar').style.width = pct + '%';
+  document.getElementById('prog-label').textContent = `Question ${cur+1} of ${total}`;
+  document.getElementById('prog-count').textContent = pct + '% complete';
+  const q = Qs[cur];
+  document.getElementById('qnum').textContent = q.label;
+  document.getElementById('qtext').textContent = q.text;
+  const sel = answers[q.id];
+  document.getElementById('opts').innerHTML = q.opts.map(o => `
+    <div class="opt${sel===o.val?' selected':''}" onclick="pick('${q.id}','${o.val}')">
+      <div class="opt-dot"></div>
+      <div><div class="opt-title">${o.title}</div><div class="opt-sub">${o.sub}</div></div>
+    </div>`).join('');
+  document.getElementById('back-btn').disabled = cur === 0;
+  document.getElementById('next-btn').disabled = !sel;
+  document.getElementById('next-btn').textContent = cur === total-1 ? 'See my results →' : 'Next →';
+  document.getElementById('dots').innerHTML = Qs.map((_,i) =>
+    `<div class="dot${i<cur?' done':i===cur?' active':''}"></div>`).join('');
+}
+
+function pick(id, val) {
+  answers[id] = val;
+  render();
+}
+
+function go(dir) {
+  if(dir===1 && cur===Qs.length-1) { showResult(); return; }
+  cur = Math.max(0, Math.min(Qs.length-1, cur+dir));
+  render();
+}
+
+function barLabel(pct) {
+  if(pct>=85) return 'Highest';
+  if(pct>=65) return 'High';
+  if(pct>=40) return 'Medium';
+  if(pct>=15) return 'Low';
+  return 'None';
+}
+
+function showResult() {
+  const s = score();
+  const sorted = Object.entries(s).sort((a,b) => b[1]-a[1]);
+  const top = sorted[0][0];
+  const maxS = sorted[0][1];
+  const m = METHODS[top];
+
+  document.getElementById('quiz-panel').classList.add('hidden');
+  const rp = document.getElementById('result-panel');
+  rp.classList.remove('hidden');
+
+  const chips = Qs.map(q => {
+    const opt = q.opts.find(o => o.val===answers[q.id]);
+    return `<span class="chip">${q.label}: ${opt ? opt.title.split('—')[0].trim() : answers[q.id]}</span>`;
+  }).join('');
+
+  rp.innerHTML = `
+    <div class="result-eyebrow">Your recommended approach</div>
+
+    <div class="result-main">
+      <div class="result-hero" style="border-bottom:1px solid #e8eff4;background:${m.color}0d">
+        <div class="result-icon" style="background:${m.color}">${m.short}</div>
+        <div>
+          <div class="result-title">${m.name}</div>
+          <div class="result-tag">${m.tagline}</div>
+        </div>
+      </div>
+      <div class="result-body">
+        <div class="factors-title" style="margin-top:16px">Profile across key factors</div>
+        ${[
+          ['Cost certainty', m.bars.cost, '#0D7680', m.labels.cost],
+          ['Schedule benefit', m.bars.schedule, '#0D7680', m.labels.schedule],
+          ['Risk transfer', m.bars.risk, '#1B3A5C', m.labels.risk],
+          ['Ops integration', m.bars.ops, '#E8A838', m.labels.ops],
+          ['Owner control', m.bars.control, '#4A6274', m.labels.control],
+        ].map(([lbl,pct,col,valLbl])=>`
+          <div class="factor-row">
+            <span class="factor-lbl">${lbl}</span>
+            <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${col}"></div></div>
+            <span class="factor-val">${valLbl}</span>
+          </div>`).join('')}
+        <div class="why-box">
+          <strong>Why this fits your priorities:</strong><br>
+          ${whyText(top)}
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="all-title">All methods — ranked by fit</div>
+    <div class="mini-grid">
+      ${sorted.map(([key,sc],i) => {
+        const mm = METHODS[key];
+        const pct = Math.round((sc/maxS)*100);
+        return `<div class="mini-card${i>0?' dim':''}">
+          <div class="mini-name">${mm.name}</div>
+          <div class="mini-bar"><div class="mini-bar-fill" style="width:${pct}%;background:${mm.color}"></div></div>
+          <div class="mini-note">${i===0?'Best match for your priorities':i===1?'Close second':i===2?'Partial match':'Further from your priorities'}</div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <hr class="divider">
+
+    <div class="answers-title">Your answers</div>
+    <div class="chip-wrap">${chips}</div>
+
+    <div class="restart-row">
+      <button class="btn" onclick="restart()" style="margin-top:16px">← Start over</button>
+    </div>
+  `;
+
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function restart() {
+  Object.keys(answers).forEach(k => delete answers[k]);
+  cur = 0;
+  document.getElementById('result-panel').classList.add('hidden');
+  document.getElementById('quiz-panel').classList.remove('hidden');
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
